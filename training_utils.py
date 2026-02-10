@@ -1,5 +1,4 @@
 import torch
-from normalize import normalize_label
 
 
 def train_epoch(model, dataloader, optimizer, criterion, device):
@@ -24,11 +23,6 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
         images = images.to(device)
         labels = labels.to(device)
         
-        # Normalize labels
-        labels_np = labels.cpu().numpy().reshape(-1, 1)
-        labels_normalized = normalize_label(labels_np)
-        labels_normalized = torch.from_numpy(labels_normalized).to(device).float().squeeze()
-        
         # Forward pass
         optimizer.zero_grad()
         outputs = model(images).squeeze()
@@ -36,11 +30,11 @@ def train_epoch(model, dataloader, optimizer, criterion, device):
         # Ensure shapes match
         if outputs.dim() == 0:
             outputs = outputs.unsqueeze(0)
-        if labels_normalized.dim() == 0:
-            labels_normalized = labels_normalized.unsqueeze(0)
+        if labels.dim() == 0:
+            labels = labels.unsqueeze(0)
         
         # Compute differentiable circular loss
-        loss = criterion(outputs, labels_normalized)
+        loss = criterion(outputs, labels)
         
         # Backward pass
         loss.backward()
@@ -74,22 +68,17 @@ def validate(model, dataloader, criterion, device):
             images = images.to(device)
             labels = labels.to(device)
             
-            # Normalize labels
-            labels_np = labels.cpu().numpy().reshape(-1, 1)
-            labels_normalized = normalize_label(labels_np)
-            labels_normalized = torch.from_numpy(labels_normalized).to(device).float().squeeze()
-            
             # Forward pass
             outputs = model(images).squeeze()
             
             # Ensure shapes match
             if outputs.dim() == 0:
                 outputs = outputs.unsqueeze(0)
-            if labels_normalized.dim() == 0:
-                labels_normalized = labels_normalized.unsqueeze(0)
+            if labels.dim() == 0:
+                labels = labels.unsqueeze(0)
             
             # Compute circular loss
-            loss = criterion(outputs, labels_normalized)
+            loss = criterion(outputs, labels)
             total_loss += loss.item()
             batch_count += 1
     
